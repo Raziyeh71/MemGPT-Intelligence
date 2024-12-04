@@ -140,5 +140,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Contact
 
-Your Name - your.email@example.com
-Project Link: [https://github.com/yourusername/memgpt_simple](https://github.com/yourusername/memgpt_simple)
+Razy Shafiee - r.shafiee93@gmail.com
+Project Link: [https://github.com/Raziyeh71/MemGPT-Intelligence.git](https://github.com/Raziyeh71/MemGPT-Intelligence.git)
