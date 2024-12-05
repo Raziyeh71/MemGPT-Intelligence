@@ -2,7 +2,8 @@ import os
 from typing import List, Dict, Optional
 import json
 from datetime import datetime
-import openai
+from memgpt.client import MemGPTClient
+from memgpt.constants import DEFAULT_HUMAN
 from dotenv import load_dotenv
 import sys
 
@@ -16,82 +17,57 @@ if not api_key:
     print("Please ensure you have a .env file with your API key")
     sys.exit(1)
 
-openai.api_key = api_key
+os.environ["OPENAI_API_KEY"] = api_key
 
-class MemoryEnhancedAssistant:
+class MemGPTEnhancedAssistant:
     def __init__(self, 
                  model: str = "gpt-4",
-                 storage_dir: str = "memory_storage",
-                 memory_window: int = 10):
+                 storage_dir: str = "memgpt_storage"):
         """
-        Initialize memory-enhanced assistant
+        Initialize MemGPT-enhanced assistant
         
         Args:
             model: Model to use (e.g., "gpt-4", "gpt-3.5-turbo")
             storage_dir: Directory for storing persistent data
-            memory_window: Number of recent conversations to keep in context
         """
-        self.model = model
         self.storage_dir = storage_dir
-        self.memory_window = memory_window
         os.makedirs(storage_dir, exist_ok=True)
+        
+        # Initialize client
+        self.client = MemGPTClient()
+        
+        # Create agent
+        self.agent = self.client.create_agent(
+            name="assistant",
+            model=model,
+            human=DEFAULT_HUMAN,
+            persona="You are a helpful AI assistant with persistent memory."
+        )
         
         # Initialize conversation history
         self.conversation_history = []
         
-        # System message that includes memory management capabilities
-        self.system_message = """You are a helpful AI assistant with memory capabilities. You can:
-1. Remember previous conversations within your context window
-2. Reference past interactions when relevant
-3. Build upon previous context to provide more personalized responses
-4. Maintain conversation continuity
-
-When appropriate, refer back to previous interactions to provide more context-aware responses."""
-        
-    def _format_messages(self, new_message: str) -> List[Dict[str, str]]:
-        """Format messages for the API call"""
-        messages = [{"role": "system", "content": self.system_message}]
-        
-        # Add recent conversation history
-        start_idx = max(0, len(self.conversation_history) - self.memory_window)
-        for entry in self.conversation_history[start_idx:]:
-            messages.append({"role": "user", "content": entry["user"]})
-            messages.append({"role": "assistant", "content": entry["assistant"]})
-        
-        # Add new message
-        messages.append({"role": "user", "content": new_message})
-        return messages
-        
     def send_message(self, message: str) -> str:
         """
-        Send a message to the assistant and get response
+        Send a message to the MemGPT agent and get response
         
         Args:
             message: User message
             
         Returns:
-            Assistant's response
+            Agent's response
         """
-        # Prepare messages with context
-        messages = self._format_messages(message)
-        
-        # Get response from OpenAI
-        response = openai.chat.completions.create(
-            model=self.model,
-            messages=messages
-        )
-        
-        # Extract response text
-        response_text = response.choices[0].message.content
+        # Send message and get response
+        response = self.client.user_message(self.agent.id, message)
         
         # Store in conversation history
         self.conversation_history.append({
             "timestamp": datetime.now().isoformat(),
             "user": message,
-            "assistant": response_text
+            "assistant": response
         })
         
-        return response_text
+        return response
     
     def save_conversation(self):
         """Save conversation history"""
@@ -106,15 +82,14 @@ When appropriate, refer back to previous interactions to provide more context-aw
             with open(history_file, "r") as f:
                 self.conversation_history = json.load(f)
 
-def demo_assistant():
-    """Demonstrate memory-enhanced assistant capabilities"""
+def demo_memgpt_assistant():
+    """Demonstrate MemGPT-enhanced assistant capabilities"""
     
     # Initialize assistant
-    print("Initializing memory-enhanced assistant...")
-    assistant = MemoryEnhancedAssistant(
+    print("Initializing MemGPT-enhanced assistant...")
+    assistant = MemGPTEnhancedAssistant(
         model="gpt-4",
-        storage_dir="memory_demo_storage",
-        memory_window=10
+        storage_dir="memgpt_demo_storage"
     )
     
     print("\nAssistant is ready! You can start chatting.")
@@ -151,4 +126,4 @@ def demo_assistant():
             print("Please try again or type 'exit' to quit.")
 
 if __name__ == "__main__":
-    demo_assistant()
+    demo_memgpt_assistant()
