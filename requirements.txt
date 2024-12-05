@@ -6,3 +6,6 @@ sentence-transformers==2.2.2
 scikit-learn>=1.0.2
 pandas>=1.5.0
 nltk>=3.8.1
+memgpt>=0.2.9
+chromadb>=0.4.22
+openai>=1.12.0
